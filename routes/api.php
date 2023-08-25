@@ -14,6 +14,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::group(['prefix' => 'webhook'], function () {
+    Route::get('github', [\App\Http\Controllers\WebhooksController::class, 'github']);
 });
