@@ -15,5 +15,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::group(['prefix' => 'webhook'], function () {
-    Route::get('github', [\App\Http\Controllers\WebhooksController::class, 'github']);
+    Route::post('github', [\App\Http\Controllers\WebhooksController::class, 'github']);
 });
