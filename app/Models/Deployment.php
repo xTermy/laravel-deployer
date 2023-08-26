@@ -29,6 +29,6 @@ class Deployment extends Model
 
     public function lastCommand()
     {
-        return $this->belongsTo('last_command_id');
+        return $this->belongsTo(Command::class, 'last_command_id', 'id');
     }
 }

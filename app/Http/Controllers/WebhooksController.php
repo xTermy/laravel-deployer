@@ -21,14 +21,16 @@ class WebhooksController extends Controller
         do {
             $deploymentCode = Str::random(30);
         } while(Deployment::where('code', $deploymentCode)->count() > 0);
-        if ($repo->branch === $data['repository'][''])
-        $repo->deployments()->create([
-            'code' => $deploymentCode,
-            'head_commit_id' => $data['head_commit']['id'],
-            'committer' => $data['head_commit']['committer']['name'],
-            'last_command_id' => null,
-            'status' => DeploymentStatusEnum::Awaiting,
-        ]);
+        $ref = explode('/', $data['ref']);
+        if ($repo->branch === last($ref)) {
+            $repo->deployments()->create([
+                'code' => $deploymentCode,
+                'head_commit_id' => $data['head_commit']['id'],
+                'committer' => $data['head_commit']['committer']['name'],
+                'last_command_id' => null,
+                'status' => DeploymentStatusEnum::Awaiting,
+            ]);
+        }
         return response()->json();
     }
 }
