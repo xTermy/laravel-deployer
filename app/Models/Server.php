@@ -18,7 +18,6 @@ class Server extends Model
 
     public function repositories()
     {
-        return $this->hasMany(Repository::class, 'prod_server_id', 'id')
-            ->orWhere('dev_server_id', $this->id);
+        return $this->hasMany(Repository::class, 'server_id', 'id');
     }
 }
