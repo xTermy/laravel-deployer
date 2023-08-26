@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('command');
 
             $table->timestamps();
+
+            $table->index('repository_id');
+            $table->foreign('repository_id')->references('id')->on('repositories')->onDelete('cascade');
         });
     }
 
