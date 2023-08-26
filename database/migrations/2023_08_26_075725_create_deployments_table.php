@@ -17,9 +17,9 @@ return new class extends Migration
             $table->foreignId('repository_id');
             $table->string('code');
             $table->string('head_commit_id');
-            $table->string('commiter');
-            $table->foreignId('last_command_id');
-            $table->string('status');
+            $table->string('committer');
+            $table->foreignId('last_command_id')->nullable();
+            $table->string('status')->default(\App\Enums\DeploymentStatusEnum::Awaiting);
 
             $table->timestamps();
         });

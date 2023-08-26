@@ -17,4 +17,9 @@ class Repository extends Model
     {
         return $this->belongsTo(Server::class, 'server_id', 'id');
     }
+
+    public function deployments()
+    {
+        return $this->hasMany(Deployment::class);
+    }
 }

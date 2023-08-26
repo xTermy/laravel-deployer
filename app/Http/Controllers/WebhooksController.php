@@ -12,8 +12,8 @@ class WebhooksController extends Controller
 {
     public function github(Request $request)
     {
-        file_put_contents('data.json', json_encode($request->all()));
-        $data = $request->all();
+        $data = json_decode($request->input('payload'), true);
+
         $repo = Repository::where('repository_name', $data['repository']['full_name'])->first();
         if(is_null($repo)) {
             return response()->json();
@@ -21,11 +21,11 @@ class WebhooksController extends Controller
         do {
             $deploymentCode = Str::random(30);
         } while(Deployment::where('code', $deploymentCode)->count() > 0);
-
+        if ($repo->branch === $data['repository'][''])
         $repo->deployments()->create([
             'code' => $deploymentCode,
             'head_commit_id' => $data['head_commit']['id'],
-            'commiter' => $data['head_commit']['committer']['name'],
+            'committer' => $data['head_commit']['committer']['name'],
             'last_command_id' => null,
             'status' => DeploymentStatusEnum::Awaiting,
         ]);

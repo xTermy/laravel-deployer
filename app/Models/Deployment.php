@@ -11,7 +11,7 @@ class Deployment extends Model
         'repository_id',
         'code',
         'head_commit_id',
-        'comitter',
+        'committer',
         'last_command_id',
         'status',
     ];
