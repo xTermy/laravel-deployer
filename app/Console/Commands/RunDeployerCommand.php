@@ -21,7 +21,7 @@ class RunDeployerCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'app:run-deployer-command';
+    protected $signature = 'app:run-deployer';
 
     /**
      * The console command description.
@@ -49,6 +49,9 @@ class RunDeployerCommand extends Command
                     if(!Storage::exists('deployments/'.strtolower($deployment->repository->repository_name))) {
                         Storage::makeDirectory('deployments/'.strtolower($deployment->repository->repository_name));
                     }
+                    if(Storage::exists('deployments/'.strtolower($deployment->repository->repository_name).'/'.$deployment->code)) {
+                        Storage::deleteDirectory('deployments/'.strtolower($deployment->repository->repository_name).'/'.$deployment->code);
+                    }
                     //set status
                     $process = Process::run('cd '.Storage::path('deployments/'.strtolower($deployment->repository->repository_name)).' && git clone  -b '. $deployment->repository->branch .' --single-branch '. $deployment->repository->git_url .' '.$deployment->code . ' && cd '. $deployment->code .' && git checkout '.$deployment->head_commit_id.' && rm -rf .git');
 
@@ -70,34 +73,29 @@ class RunDeployerCommand extends Command
                         }
                         Log::log('info', $process->output());
                     }
-                    $filesystem = new Filesystem(new SftpAdapter(
-                        new SftpConnectionProvider(
-                            $deployment->repository->server->host, // host (required)
-                            $deployment->repository->server->username, // username (required)
-                            $deployment->repository->server->password, // password (optional, default: null) set to null if privateKey is used
-                            null, // private key (optional, default: null) can be used instead of password, set to null if password is set
-                            null, // passphrase (optional, default: null), set to null if privateKey is not used or has no passphrase
-                            $deployment->repository->server->port, // port (optional, default: 22)
-                            true, // use agent (optional, default: false)
-                            30, // timeout (optional, default: 10)
-                            10, // max tries (optional, default: 4)
-                            null, // host fingerprint (optional, default: null),
-                            null, // connectivity checker (must be an implementation of 'League\Flysystem\PhpseclibV2\ConnectivityChecker' to check if a connection can be established (optional, omit if you don't need some special handling for setting reliable connections)
-                        ),
-                        '/upload', // root path (required)
-                        PortableVisibilityConverter::fromArray([
-                            'file' => [
-                                'public' => 0640,
-                                'private' => 0604,
-                            ],
-                            'dir' => [
-                                'public' => 0740,
-                                'private' => 7604,
-                            ],
-                        ])
-                    ));
-                    dd($filesystem->listContents(''));
+                    $process = Process::run('sshpass -p \''.$deployment->repository->server->password.'\' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p '.$deployment->repository->server->port.' '.$deployment->repository->server->username.'@'.$deployment->repository->server->host .' \'rm -rf '.$deployment->repository->server->path.'/*\'');
+                    if($process->exitCode() > 0) {
+                        Log::log('error', $process->errorOutput());
+                        //set status
+                        throw new \Exception($process->errorOutput());
+                    }
+                    Log::log('info', $process->output());
 
+                    $process = Process::run('echo "put -r '.Storage::path('deployments/'.strtolower($deployment->repository->repository_name).'/'.$deployment->code).'/*" | sshpass -p \''.$deployment->repository->server->password.'\' sftp -oBatchMode=no -P '.$deployment->repository->server->port.' '.$deployment->repository->server->username.'@'.$deployment->repository->server->host.':'.$deployment->repository->server->path);
+                    if($process->exitCode() > 0) {
+                        Log::log('error', $process->errorOutput());
+                        //set status
+                        throw new \Exception($process->errorOutput());
+                    }
+                    Log::log('info', $process->output());
+
+                    $process = Process::run('echo "put -r '.Storage::path('deployments/'.strtolower($deployment->repository->repository_name).'/'.$deployment->code).'/.*" | sshpass -p \''.$deployment->repository->server->password.'\' sftp -oBatchMode=no -P '.$deployment->repository->server->port.' '.$deployment->repository->server->username.'@'.$deployment->repository->server->host.':'.$deployment->repository->server->path);
+                    if($process->exitCode() > 0) {
+                        Log::log('error', $process->errorOutput());
+                        //set status
+                        throw new \Exception($process->errorOutput());
+                    }
+                    Log::log('info', $process->output());
 //                    dump($deployment);
                     exit();
                 } catch (\Throwable $th) {
